@@ -1,0 +1,9 @@
+<Projects version="2.0">
+	<Project active="1">library.cfp</Project>
+	<File active="0">..\..\library2.0\lib\library2.0\book.c</File>
+	<File active="0">..\..\library2.0\lib\library2.0\book.h</File>
+	<File active="0">..\..\library2.0\lib\library2.0\borrow.c</File>
+	<File active="0">..\..\library2.0\lib\library2.0\borrow.h</File>
+	<File active="0">..\..\library2.0\lib\library2.0\code.c</File>
+	<File active="1">..\..\library2.0\lib\library2.0\code.h</File>
+</Projects>

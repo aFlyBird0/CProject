@@ -1,0 +1,6 @@
+<Projects version="2.0">
+	<Project active="1">player.cfp</Project>
+	<File active="0">..\player.h</File>
+	<File active="1">..\player.c</File>
+	<File active="0">..\main.c</File>
+</Projects>
