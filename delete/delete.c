@@ -15,7 +15,7 @@ char* delete(char str[], char ch)
 		}
 		p++;
 	}
-	*q = '\0';  //ÖÃ'\0' 
+	*q = '\0';  //ç½®'\0' 
 	return str;
 }
 
@@ -23,7 +23,7 @@ int main()
 {
 	char str[50], delete_char; 
 	scanf("%s",str);
-	getchar();                 //¶ÁÈ¡»Ø³µ»òÕß¿Õ¸ñ 
+	getchar();                 //è¯»å–å›è½¦æˆ–è€…ç©ºæ ¼ 
 	delete_char = getchar();
 	printf("%s", delete(str,delete_char));
 	return 0;

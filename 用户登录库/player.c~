@@ -1,0 +1,342 @@
+#include "player.h"
+#include <stdio.h>
+#include <windows.h>
+
+#define USER_PATH "user.txt" 
+
+/*******************************************
+使用时需要在exe同级目录下面创建一个与USER_PATH
+对应的字符串（默认“user.txt")同名的txt文件
+
+注意user.txt是用来存放所有用户名字和密码的文件
+而“具体的某个用户名”.txt是用来存放每个用户具体信息的文件 
+该文件我已经写了自动生成功能 
+*******************************************/
+
+User users[500];
+
+int user_n;
+char user_name[30];
+
+void read_user(const char filename[])
+{
+	char content[100];
+	int i = 0;
+	FILE *fp_user; 
+ 	if(!(fp_user=fopen(USER_PATH,"r")))
+  	{
+     	printf("error to open user");
+     	exit(0);
+   	} 
+   	fgets(content,100,fp_user);  //把第一行读掉 
+   	while(!feof(fp_user))
+    {
+     	i++;
+     	fscanf(fp_user,"%d%s%s", &users[i].num, 
+								 users[i].id, 
+								 users[i].password );
+     	strcpy(users[i].password, decode(users[i].password)); //解密 
+    }
+    user_n = i - 1;
+    //printf("%d ", user_n);
+    fclose(fp_user); 
+    
+}
+
+ 
+ void save_user(const char filename[])
+ {
+ 	int i;
+ 	FILE* fp_user = fopen(filename,"w");
+ 	//printf("%d ", user_n);
+ 	if(fp_user == NULL)
+  	{
+     	printf("error");
+     	exit(0);
+   	}
+   	fprintf(fp_user,"序号\t用户名(id)\t密码\n") ;
+   	
+    for(i=1; i<=user_n; i++)
+    {
+		fprintf(fp_user,"%d\t%s\t\t%s\t\t\n",
+	 					users[i].num, 
+	 					users[i].id, 
+	 					encode(users[i].password));
+   	}
+    fclose(fp_user);
+ }
+ 
+ int is_exist_user(const char* user_id)
+ {
+ 	int i;
+  	for(i=1; i<=user_n; i++)
+  	{
+		if(strcmp(user_id, users[i].id)==0)
+			return 1;  	
+  	}
+  	return 0;
+ }
+ 
+void login_or_regist_window()
+ {
+ 	read_user(USER_PATH);
+	 while(1)
+	 {
+	 	int instruction;
+	 	printf("1.登录 2.注册 其余退出并保存\n");
+	 	scanf("%d", &instruction);
+	 	if(instruction == 1)
+	 	{
+	 		if(login())   //是否登录成功
+		 	{
+ 				printf("登录成功!\n");
+ 				Sleep(500);  //延迟半秒
+ 				system("cls");//清屏 
+ 				return;
+ 			} 
+ 			else 
+			{
+				printf("登录失败，自动返回上级菜单\n");
+ 				Sleep(500);  //延迟半秒
+ 				system("cls");//清屏 
+			}			
+	 	}
+	 	else if(instruction == 2)
+	 	{
+ 			regist();
+ 		} 
+ 		else
+ 			exit(0);	 
+ 	 }
+ }
+ 
+ int login(const char filename[])
+ {
+ 	int i, login_state = 0;
+ 	char user_id[30], password[30]; 
+ 	User *user = NULL;
+ 	printf("请输入你的id(用户名):\n");
+ 	scanf("%s", user_id);
+ 	
+ 	if(is_exist_user(user_id)!=1)
+ 	{
+		printf("该用户不存在\n"); 	
+ 	}
+ 	else
+ 	{
+ 		user = get_user(user_id);
+ 		printf("%s\n", user->password); 
+ 		for(i=0; i<3; i++)    //三次机会输入密码 
+ 		{
+		 	printf("请输入你的密码:\n");
+	 		scanf("%s", password);
+	 		if(strcmp(password, user->password)==0)
+	 		{
+		 		login_state = 1; 
+		 		strcpy(user_name, user_id);//保存当前用户名字 
+		 		return login_state;
+		 	}	
+	 	}
+		 printf("连续三次密码输入错误!\n");	
+ 	}
+ 	return login_state;    //返回是否登录成功 
+ }
+ 
+ void regist()
+ {
+ 	printf("请输入欲注册的用户名(id):\n");
+ 	char user_id[30], password1[30], password2[30];
+ 	scanf("%s", user_id);
+ 	User *user = NULL;
+ 	if(is_exist_user(user_id)==1)
+ 	{
+	 	printf("该用户已存在！\n");
+	 	return ;
+ 	}
+ 	printf("请输入密码:\n");
+ 	scanf("%s",password1);
+ 	printf("请再次输入密码:\n");
+ 	scanf("%s",password2);
+ 	if(strcmp(password1,password2)==0)
+ 	{
+	 	user_n++;
+	 	users[user_n].num = user_n;
+	 	strcpy(users[user_n].id, user_id); 
+	 	strcpy(users[user_n].password, password1);
+	 	printf("注册成功！\n");
+	 	strcpy(user_name, user_id);
+	 	save_user(USER_PATH);
+ 	}		
+	else
+ 		printf("两次密码不一致，注册失败！\n");
+ }
+ 
+ void delete_user()
+ {
+ 	 int i, instruction;
+     char temp_password[50];
+ 	 printf("当前用户名：%s\n", user_name);
+ 	 User *user = get_user(user_name);
+ 	 printf("请输入用户密码:\n");
+ 	 scanf("%s", temp_password);
+ 	 if(strcmp(temp_password, user->password) == 0)
+ 	 {
+ 	 	printf("按1确定删除，其余取消\n");
+ 	 	scanf("%d", &instruction);
+ 	 	if(instruction == 1)
+ 	 	{
+	 	 	for(i=user->num; i<user_n-1; i++)
+	 	 	{
+		 	 	strcpy((users+i)->id,(users+i+1)->id);
+		 	 	strcpy((users+i)->password,(users+i+1)->password);
+	 	    }
+		 	 printf("  用户密码:\n");
+		 	 user_n--;
+		 	 save_user(USER_PATH);
+	 	 }
+ 	 	
+ 	 }
+ 	 else
+ 	 	printf("密码错误,删除用户信息失败！\n");
+ 	 
+ }
+ 
+ void change_password()
+ {
+	 int i, instruction;
+     char temp_password[50], password1[50], password2[50];
+ 	 printf("当前用户名：%s\n", user_name);
+ 	 User *user = get_user(user_name);
+ 	 printf("请输入用户密码:\n");
+ 	 scanf("%s", temp_password);
+ 	 if(strcmp(temp_password, user->password) == 0)
+ 	 {
+ 	 	printf("密码验证成功，请输入欲修改为的密码:\n");
+	 	scanf("%s",password1);
+	 	printf("请再次输入密码:\n");
+	 	scanf("%s",password2);
+	 	if(strcmp(password1,password2)==0)
+	 	{
+		 	strcpy(user->password, password1);
+		 	printf("密码修改成功！\n");
+		 	save_user(USER_PATH);
+	 	}		
+ 	 	
+ 	 }
+ 	 else
+ 	 	printf("密码错误,密码更改失败！\n");
+ }
+ 
+ User* get_user(const char* user_id)
+ {
+	int i;
+  	for(i=1; i<=user_n; i++)
+  	{
+		if(strcmp(user_id, users[i].id)==0)
+			return users+i;  	
+  	}
+  	return NULL;
+ }
+ 
+ char* encode(char *prim) 
+{
+    int i,n,len;
+    char code[100];
+    char temp_char,trans_char;
+    int temp_num,trans_num;
+    len = strlen(prim);
+
+    for(i = 0;i < len;i++)
+    {
+        temp_char = prim[i]; 
+        if (temp_char <= 'z' && temp_char >= 'a')
+            temp_num = temp_char - 'a' + 1;
+        else if (temp_char <= 'Z' && temp_char >= 'A')
+            temp_num = temp_char - 'A' + 27;
+
+        trans_num = temp_num*3 % 52;
+
+        if (trans_num > 26 && trans_num <= 52)
+            trans_char = 'A' + trans_num - 27;
+        else if (trans_num > 0 && trans_num <= 26)
+            trans_char = 'a' + trans_num - 1;
+            
+        if (temp_char >= '0' && temp_char <= '9')
+		    temp_num = temp_char - '0' + 53;
+		    trans_num = temp_num;
+		if (trans_num > 52 && trans_num <= 63)
+		    trans_char = '0' + 63 - trans_num; 
+
+        code[i] = trans_char;
+    }
+    code[len] = '\0';
+    return code;
+}
+
+char* decode(char *code)
+{
+    int i,n,len;
+    char prim[100];
+    char temp_char,trans_char;
+    int temp_num,trans_num;
+    len = strlen(code);
+
+    for(i = 0;i < len;i++) {
+        temp_char = code[i];
+        if (temp_char <= 'z' && temp_char >= 'a')
+            temp_num = temp_char - 'a' + 1;
+        else if (temp_char <= 'Z' && temp_char >= 'A')
+            temp_num = temp_char - 'A' + 27;
+
+        n = temp_num % 3;
+        switch(n) {
+        case 0:
+            trans_num = temp_num/3;
+            break;
+        case 1:
+            trans_num = 35 + temp_num/3;
+            break;
+        case 2:
+            trans_num = 18 + temp_num/3;
+            break;
+        default:
+            break;
+        }
+        if (trans_num > 26 && trans_num <= 52)       
+            trans_char = 'A' + trans_num - 27;
+        else if (trans_num > 0 && trans_num <= 26)
+            trans_char = 'a' + trans_num - 1;
+            
+        if (temp_char <= '9' && temp_char >= '0')
+            temp_num = '0' + 63 - temp_char;
+            trans_num = temp_num;
+        if (trans_num >52 && trans_num <= 63)
+            trans_char = trans_num + '0' - 53;
+
+        prim[i] = trans_char;
+    }
+    prim[len] = '\0';
+    return prim;
+}
+
+
+void create_if_not_exit()
+  /*注意这个函数创建的是具体某个人的信息
+    比如"player_1.txt" 存放内容是具体信息
+    该文件的保存功能因为每个程序数据都不一样所以不写 
+	*/ 
+{
+	int i;
+	char filename[50];
+	strcpy(filename, user_name);
+	strcat(filename, ".txt");
+	FILE *fp;
+	if(!(fp=fopen(filename,"r")))
+  	{
+     	FILE *fp = fopen(filename,"w");
+     	fclose(fp);
+	 	//如果这个用户信息文件还未被创建，那么创建一个 
+   	} 
+   	fclose(fp); 
+}
+
